@@ -1,0 +1,10 @@
+apiVersion: v2
+name: grafana
+description: External Secrets (second source = upstream chart from Git; values in values.yaml)
+type: application
+version: 12.3.3
+appVersion: "13.0.1-security-01"
+repoURL: https://github.com/grafana-community/helm-charts.git
+targetRevision: main
+secondPath: charts/grafana
+namespace: monitoring
