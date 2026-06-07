@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kuma-metrics-auth
+  namespace: gcpa-grafana
+type: Opaque
+stringData:
+  password: "YOUR_PASSWORD"
+---
+apiVersion: monitoring.googleapis.com/v1
+kind: PodMonitoring
+metadata:
+  name: uptime-kuma
+  namespace: gcpa-grafana
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: uptime-kuma
+      app.kubernetes.io/name: uptime-kuma
+  endpoints:
+    - port: 3001
+      path: /metrics
+      interval: 30s
+      basicAuth:
+        username: "YOUR_USERNAME"
+        password:
+          name: kuma-metrics-auth
+          key: password
