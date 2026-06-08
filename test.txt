@@ -1,0 +1,2 @@
+kubectl auth can-i get secrets/kuma-metrics-auth \
+  --as=system:serviceaccount:gmp-system:collector -n monitoring
