@@ -1,0 +1,12 @@
+apiVersion: monitoring.googleapis.com/v1
+kind: ClusterPodMonitoring
+metadata:
+  name: app-metrics
+spec:
+  selector:
+    matchLabels:
+      gmp/scrape: "true"
+  endpoints:
+    - port: metrics
+      path: /metrics
+      interval: 30s
