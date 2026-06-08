@@ -1,2 +1,60 @@
 kubectl auth can-i get secrets/kuma-metrics-auth \
   --as=system:serviceaccount:gmp-system:collector -n monitoring
+
+
+  # === 0. הקשר (וודא שאתה על קלאסטר הפרוד) ===
+kubectl config current-context
+kubectl get nodes
+
+# === 1. איפה GMP רץ (collector / operator) ===
+kubectl get pods -A -l app.kubernetes.io/name=collector
+kubectl get pods -A -l app.kubernetes.io/name=operator
+kubectl get pods -n gcpa-grafana
+kubectl get sa -n gcpa-grafana | grep -i collector
+
+# === 2. kuma pods + labels ===
+kubectl get pods -n monitoring -l app.kubernetes.io/name=uptime-kuma -o wide --show-labels
+kubectl get pods -n monitoring -l app.kubernetes.io/instance=kuma-uptime,app.kubernetes.io/name=uptime-kuma
+
+# === 3. PodMonitoring + Secret + RBAC ===
+kubectl get podmonitoring -n monitoring
+kubectl get podmonitoring uptime-kuma -n monitoring -o yaml
+kubectl get secret kuma-metrics-auth -n monitoring
+kubectl get role,rolebinding -n monitoring | grep -i kuma
+
+kubectl get role kuma-metrics-auth-read -n monitoring -o yaml
+kubectl get rolebinding gmp-system:collector:kuma-metrics-auth-read -n monitoring -o yaml
+
+# === 4. האם ה-collector יכול לקרוא את ה-Secret? (שנה NS אם צריך) ===
+kubectl auth can-i get secrets/kuma-metrics-auth \
+  --as=system:serviceaccount:gcpa-grafana:collector -n monitoring
+
+kubectl auth can-i get secrets/kuma-metrics-auth \
+  --as=system:serviceaccount:gmp-system:collector -n monitoring
+
+# === 5. בדיקת /metrics + auth (הכי חשוב) ===
+PASS=$(kubectl get secret kuma-metrics-auth -n monitoring -o jsonpath='{.data.password}' | base64 -d)
+echo "password length: ${#PASS}"
+
+kubectl run kuma-curl-test --rm -i --restart=Never --image=curlimages/curl:latest -n monitoring -- \
+  sh -c 'curl -s -o /dev/null -w "no-auth:%{http_code}\n" http://kuma-uptime-uptime-kuma.monitoring.svc:3001/metrics; \
+         curl -s -o /dev/null -w "admin-auth:%{http_code}\n" -u "admin:'"$PASS"'" http://kuma-uptime-uptime-kuma.monitoring.svc:3001/metrics'
+
+# === 6. ClusterPodMonitoring (לא חייב ל-kuma, רק לוודא) ===
+kubectl get clusterpodmonitoring
+kubectl get podmonitoring -A
+
+# === 7. לוגים של collector (שנה NS לפי מה שיצא בשלב 1) ===
+kubectl logs -n gcpa-grafana -l app.kubernetes.io/name=collector -c prometheus --since=15m \
+  | grep -iE 'uptime|kuma|401|secret|error|monitoring/uptime'
+
+# אם אין פלט, נסה גם:
+kubectl logs -n gmp-system -l app.kubernetes.io/name=collector -c prometheus --since=15m \
+  | grep -iE 'uptime|kuma|401|secret|error|monitoring/uptime'
+
+# === 8. סטטוס PodMonitoring (אם קיים) ===
+kubectl get podmonitoring uptime-kuma -n monitoring -o jsonpath='{.status}' | jq .
+
+# === 9. שירות + port של kuma ===
+kubectl get svc -n monitoring | grep -i kuma
+kubectl get pod -n monitoring -l app.kubernetes.io/name=uptime-kuma -o jsonpath='{range .items[*]}{.metadata.name}{" ports="}{.spec.containers[0].ports}{"\n"}{end}'
