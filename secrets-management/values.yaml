@@ -1,0 +1,10 @@
+kuma-metrics-auth:
+    external_secret_name: kuma-metrics-auth
+    namespaces:
+      - monitoring
+    refreshInterval: 30m
+    secretStoreRefName: gcp-secret-store
+    target: kuma-metrics-auth
+    dataFrom: 
+      extract: 
+        key: token-for-uptime-kuma
