@@ -1,0 +1,56 @@
+# Hubble UI for GKE managed Cilium (Dataplane V2)
+# Override only what you need, e.g.:
+#   helm upgrade --install hubble-ui . -n gke-managed-dpv2-observability --set replicaCount=2
+
+name: hubble-ui
+namespace: gke-managed-dpv2-observability
+
+replicaCount: 1
+
+frontend:
+  image:
+    repository: quay.io/cilium/hubble-ui
+    tag: "v0.13.2"
+    pullPolicy: IfNotPresent
+  port: 8081
+
+backend:
+  image:
+    repository: quay.io/cilium/hubble-ui-backend
+    tag: "v0.13.2"
+    pullPolicy: IfNotPresent
+  port: 8090
+
+service:
+  type: ClusterIP
+  port: 80
+
+serviceAccount:
+  create: true
+  name: hubble-ui
+
+rbac:
+  create: true
+
+# Suggested defaults for a light UI (1–2 users). Raise backend if you stream heavy flow traffic.
+resources:
+  frontend:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+  backend:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
