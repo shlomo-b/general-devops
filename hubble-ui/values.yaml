@@ -13,6 +13,13 @@ frontend:
     tag: "v0.13.2"
     pullPolicy: IfNotPresent
   port: 8081
+  # Optional extra env vars for the frontend container (plain value or secretKeyRef).
+  # - name: MY_VAR
+  #   value: "something"
+  # - name: MY_SECRET
+  #   secretName: my-external-secret
+  #   key: password
+  env: []
 
 backend:
   image:
@@ -20,6 +27,13 @@ backend:
     tag: "v0.13.2"
     pullPolicy: IfNotPresent
   port: 8090
+  # Optional extra env vars (plain value or secretKeyRef for External Secrets)
+  env: []
+  # - name: MY_VAR
+  #   value: "something"
+  # - name: MY_SECRET
+  #   secretName: my-external-secret
+  #   key: password
 
 service:
   type: ClusterIP
