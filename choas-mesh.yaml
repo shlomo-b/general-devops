@@ -1,0 +1,20 @@
+apiVersion: v2
+name: my-chaos-mesh
+version: 0.1.0
+
+dependencies:
+  - name: chaos-mesh
+    version: 2.7.3
+    repository: https://charts.chaos-mesh.org
+
+
+chaos-mesh:
+  dashboard:
+    create: true
+
+  controllerManager:
+    replicaCount: 3
+
+  chaosDaemon:
+    runtime: containerd
+    socketPath: /run/containerd/containerd.sock
